@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alchemik Słów</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Magiczne animacje i style */
+        body {
+            background-color: #1e1b4b; /* Głęboki fiolet */
+            color: #e2e8f0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Delikatna animacja błędu - wibruje tylko słowo, nie cały ekran */
+        @keyframes gentle-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .error-shake {
+            animation: gentle-shake 0.4s ease-in-out;
+        }
+
+        /* Animacja pulsującego kotła - stan domyślny */
+        @keyframes pulse-magic {
+            0%, 100% { 
+                transform: scale(1); 
+                filter: drop-shadow(0 0 15px #4ade80) drop-shadow(0 0 30px #22c55e); 
+            }
+            50% { 
+                transform: scale(1.08); 
+                filter: drop-shadow(0 0 25px #4ade80) drop-shadow(0 0 50px #22c55e); 
+            }
+        }
+
+        /* Animacja kotła przy sukcesie - stonowany rozbłysk */
+        @keyframes success-cauldron {
+            0% { transform: scale(1.08); filter: drop-shadow(0 0 30px #4ade80) drop-shadow(0 0 60px #22c55e); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 50px #86efac) drop-shadow(0 0 100px #4ade80); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 15px #4ade80) drop-shadow(0 0 30px #22c55e); }
+        }
+
+        .cauldron {
+            animation: pulse-magic 3s infinite ease-in-out;
+            transition: all 0.3s ease;
+        }
+
+        .cauldron.success-pulse {
+            animation: success-cauldron 0.8s ease-out forwards;
+        }
+
+        /* Bąbelki unoszące się z kotła */
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+
+        .bubble {
+            position: absolute;
+            background-color: #4ade80;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            top: 40%;
+            left: 50%;
+            animation: float-up 2s infinite ease-in;
+            z-index: 0;
+            box-shadow: 0 0 10px #4ade80;
+        }
+
+        .bubble:nth-child(2) { left: 45%; animation-delay: 0.5s; animation-duration: 2.5s; width: 10px; height: 10px; }
+        .bubble:nth-child(3) { left: 55%; animation-delay: 1s; animation-duration: 1.8s; width: 20px; height: 20px; }
+
+        /* Wyróżnienia liter */
+        .letter-correct { color: #4ade80; text-shadow: 0 0 8px #4ade80; transition: color 0.1s; }
+        .letter-pending { color: #94a3b8; transition: color 0.1s; }
+        .letter-error { color: #ef4444 !important; text-shadow: 0 0 10px #ef4444 !important; transition: all 0.1s; }
+        
+        /* Stonowana poświata przy zdobyciu punktu wokół słowa */
+        @keyframes soft-glow {
+            0% { text-shadow: 0 0 0px transparent; transform: scale(1); }
+            50% { text-shadow: 0 0 20px #4ade80, 0 0 40px #22c55e; transform: scale(1.02); color: #fff; }
+            100% { text-shadow: 0 0 8px #4ade80; transform: scale(1); color: #4ade80; }
+        }
+        
+        .word-success-glow .letter-correct {
+            animation: soft-glow 0.6s ease-out forwards;
+        }
+
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center transition-colors duration-300 relative" id="game-container">
+
+    <!-- Ekrany menu -->
+    <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-indigo-950/90 z-50 backdrop-blur-sm">
+        <h1 class="text-6xl font-bold text-green-400 mb-6 drop-shadow-[0_0_15px_rgba(74,222,128,0.8)] text-center">Alchemik Słów</h1>
+        <div class="max-w-md text-center text-indigo-200 mb-8 space-y-4 text-lg">
+            <p>Uwarz magiczną miksturę, wpisując bezbłędnie trudne słowa pełne polskich znaków.</p>
+            <p class="text-red-400 font-bold border border-red-400/30 p-4 rounded-lg bg-red-900/20">
+                ⚠️ TRYB NAGŁEJ ŚMIERCI ⚠️<br>
+                Jedna pomyłka powoduje wybuch mikstury i reset słowa. Backspace nie działa!
+            </p>
+            <p>Masz 60 sekund. Ile składników zdołasz dodać do kotła?</p>
+        </div>
+        <button id="btn-start" class="px-8 py-4 bg-green-500 hover:bg-green-400 text-indigo-950 font-bold rounded-full text-2xl transition-all shadow-[0_0_20px_#4ade80] hover:scale-105 hover:shadow-[0_0_30px_#4ade80]">
+            Rozpocznij Rytuał
+        </button>
+    </div>
+
+    <div id="end-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-indigo-950/95 z-50 hidden backdrop-blur-sm">
+        <h1 class="text-5xl font-bold text-green-400 mb-4">Czas Minął!</h1>
+        <p class="text-2xl text-indigo-200 mb-2">Dodane składniki:</p>
+        <p id="final-score" class="text-8xl font-bold text-white mb-8 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">0</p>
+        <button id="btn-restart" class="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-full text-xl transition-all shadow-[0_0_20px_#9333ea] hover:scale-105">
+            Zagraj Ponownie
+        </button>
+    </div>
+
+    <!-- Interfejs gry (Ukryty na start) -->
+    <div id="game-ui" class="w-full h-full flex flex-col items-center justify-between p-8 hidden opacity-0 transition-opacity duration-500">
+        
+        <!-- Pasek górny: Wynik i Czas -->
+        <div class="w-full max-w-4xl flex justify-between items-center text-3xl font-bold">
+            <div class="flex items-center gap-3">
+                <span class="text-purple-300">Składniki:</span>
+                <span id="score" class="text-green-400 drop-shadow-[0_0_10px_#4ade80] transition-transform duration-300">0</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-purple-300">Czas:</span>
+                <span id="timer" class="text-white">60</span><span class="text-purple-300">s</span>
+            </div>
+        </div>
+
+        <!-- Główny obszar gry -->
+        <div class="flex flex-col items-center relative w-full flex-grow justify-center">
+            
+            <div id="typing-area" class="flex flex-col items-center">
+                <!-- Słowo Wzorcowe -->
+                <div id="word-container" class="text-5xl md:text-6xl font-bold tracking-widest mb-4 z-10 text-center transition-all duration-300">
+                    <span id="target-word" class="letter-pending"></span>
+                </div>
+                
+                <!-- To co pisze gracz -->
+                <div class="text-4xl md:text-5xl font-bold tracking-widest text-white h-16 z-10 text-center mb-8 border-b-2 border-purple-500/50 pb-2 min-w-[300px]">
+                    <span id="user-input" class="text-green-300"></span><span class="animate-pulse text-purple-400">_</span>
+                </div>
+            </div>
+
+            <!-- Kocioł -->
+            <div class="relative mt-8 z-10 flex justify-center items-center w-64 h-64">
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+                <!-- SVG Kotła -->
+                <svg id="cauldron-svg" class="cauldron w-48 h-48 text-indigo-900 drop-shadow-2xl" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Zawartość / Płyn -->
+                    <path d="M5.5 10C5.5 10 9 8 12 8C15 8 18.5 10 18.5 10V12C18.5 12 15 13 12 13C9 13 5.5 12 5.5 12V10Z" fill="#4ade80"/>
+                    <!-- Kocioł główny -->
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 21C7.58172 21 4 17.4183 4 13V10.8284C3.21798 10.3541 2.9288 9.35105 3.33235 8.54397L3.77922 7.65022C4.18278 6.84315 5.12658 6.5599 5.90855 7.03423L6.03541 7.11116C7.57683 6.42582 9.63853 6 12 6C14.3615 6 16.4232 6.42582 17.9646 7.11116L18.0914 7.03423C18.8734 6.5599 19.8172 6.84315 20.2208 7.65022L20.6676 8.54397C21.0712 9.35105 20.782 10.3541 20 10.8284V13C20 17.4183 16.4183 21 12 21ZM6 10.4395V13C6 16.3137 8.68629 19 12 19C15.3137 19 18 16.3137 18 13V10.4395C16.1557 11.3912 14.1524 11.966 12 11.966C9.84762 11.966 7.84433 11.3912 6 10.4395Z" fill="#312e81"/>
+                    <!-- Obręcz -->
+                    <path d="M4 10C4 10 8 11.5 12 11.5C16 11.5 20 10 20 10V11C20 11 16 12.5 12 12.5C8 12.5 4 11 4 11V10Z" fill="#1e1b4b"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="text-purple-400 text-sm text-center">
+            Pamiętaj o polskich znakach (ą, ć, ę, ł, ń, ó, ś, ź, ż).
+        </div>
+    </div>
+
+    <script>
+        const WORDS = [
+            "żółtozielony", "dźwięczność", "chrząszcz", "szczęście", 
+            "źdźbło", "gżegżółka", "księżyc", "rzeżucha", 
+            "gwóźdź", "żółw", "pięćdziesiąt", "dziewięć", 
+            "współczucie", "różdżka", "błyskawica", "czarodziej", 
+            "zaklęcie", "przestrzeń", "wyobraźnia", "niebezpieczeństwo"
+        ];
+
+        const gameContainer = document.getElementById('game-container');
+        const startScreen = document.getElementById('start-screen');
+        const endScreen = document.getElementById('end-screen');
+        const gameUI = document.getElementById('game-ui');
+        
+        const targetWordEl = document.getElementById('target-word');
+        const wordContainer = document.getElementById('word-container');
+        const typingArea = document.getElementById('typing-area');
+        const userInputEl = document.getElementById('user-input');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const finalScoreEl = document.getElementById('final-score');
+        const cauldronSvg = document.getElementById('cauldron-svg');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnRestart = document.getElementById('btn-restart');
+
+        let currentWord = "";
+        let userInput = "";
+        let score = 0;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let isPlaying = false;
+        let isAnimating = false;
+
+        function initGame() {
+            score = 0;
+            timeLeft = 60;
+            userInput = "";
+            isAnimating = false;
+            scoreEl.innerText = score;
+            timerEl.innerText = timeLeft;
+            
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            gameUI.classList.remove('hidden');
+            
+            setTimeout(() => {
+                gameUI.classList.remove('opacity-0');
+            }, 50);
+
+            nextWord();
+            isPlaying = true;
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(timerInterval);
+            
+            gameUI.classList.add('opacity-0');
+            setTimeout(() => {
+                gameUI.classList.add('hidden');
+                endScreen.classList.remove('hidden');
+                finalScoreEl.innerText = score;
+            }, 500);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerEl.innerText = timeLeft;
+            
+            if(timeLeft <= 10) {
+                timerEl.classList.add('text-red-500', 'animate-pulse');
+            } else {
+                timerEl.classList.remove('text-red-500', 'animate-pulse');
+            }
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function nextWord() {
+            userInput = "";
+            userInputEl.innerText = userInput;
+            
+            let newWord = currentWord;
+            while(newWord === currentWord) {
+                newWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+            }
+            currentWord = newWord;
+            
+            renderTargetWord();
+        }
+
+        function renderTargetWord() {
+            let html = "";
+            for (let i = 0; i < currentWord.length; i++) {
+                if (i < userInput.length) {
+                    html += `<span class="letter-correct">${currentWord[i]}</span>`;
+                } else {
+                    html += `<span class="letter-pending">${currentWord[i]}</span>`;
+                }
+            }
+            targetWordEl.innerHTML = html;
+        }
+
+        function triggerError() {
+            isAnimating = true;
+            
+            // Delikatne trzęsienie samego obszaru wpisywania
+            typingArea.classList.add('error-shake');
+            
+            // Zmiana koloru poprawnie wpisanych do tej pory liter na czerwony (pokazuje, że wkradł się błąd)
+            const correctLetters = targetWordEl.querySelectorAll('.letter-correct');
+            correctLetters.forEach(el => {
+                el.classList.add('letter-error');
+            });
+
+            // Usunięcie wpisanego tekstu u dołu natychmiastowo lub po podświetleniu
+            userInputEl.classList.add('letter-error');
+            
+            // Po ułamku sekundy resetujemy słowo
+            setTimeout(() => {
+                typingArea.classList.remove('error-shake');
+                userInputEl.classList.remove('letter-error');
+                
+                userInput = "";
+                renderTargetWord(); // to czyści czerwone litery
+                userInputEl.innerText = userInput;
+                
+                isAnimating = false;
+            }, 400); // dopasowane do czasu trwania animacji CSS
+        }
+
+        function triggerSuccess() {
+            isAnimating = true;
+            
+            wordContainer.classList.add('word-success-glow');
+            cauldronSvg.classList.add('success-pulse');
+            scoreEl.classList.add('scale-150', 'text-white');
+            
+            setTimeout(() => {
+                score++;
+                scoreEl.innerText = score;
+                
+                wordContainer.classList.remove('word-success-glow');
+                cauldronSvg.classList.remove('success-pulse');
+                scoreEl.classList.remove('scale-150', 'text-white');
+                
+                nextWord();
+                isAnimating = false;
+            }, 600); 
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying || isAnimating) return;
+
+            if (e.key.length > 1 && e.key !== 'Backspace') return;
+
+            if (e.key === 'Backspace') {
+                e.preventDefault(); 
+                return;
+            }
+
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+
+            const expectedLetter = currentWord[userInput.length];
+            const typedLetter = e.key.toLowerCase(); 
+
+            if (typedLetter === expectedLetter) {
+                userInput += expectedLetter;
+                userInputEl.innerText = userInput;
+                renderTargetWord();
+
+                if (userInput.length === currentWord.length) {
+                    triggerSuccess();
+                }
+            } else {
+                triggerError();
+            }
+        });
+
+        btnStart.addEventListener('click', initGame);
+        btnRestart.addEventListener('click', initGame);
+
+    </script>
+</body>
+</html>

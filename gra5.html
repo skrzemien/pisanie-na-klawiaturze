@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burger Dash</title>
+    <style>
+        :root {
+            /* Pastelowe kolory tła i interfejsu */
+            --bg-color: #FDF6E3;
+            --header-bg: #FFDAB9;
+            --text-color: #4A4A4A;
+            --accent-color: #FF9AA2;
+            --plate-color: #E2E2E2;
+            
+            /* Kolory składników */
+            --ing-bulka: #F5DEB3;
+            --ing-kotlet: #C49A76;
+            --ing-ser: #FFFACD;
+            --ing-pomidor: #FFB6C1;
+            --ing-ogorek: #A2E4B8;
+            --ing-salata: #C1E1C1;
+            --ing-cebula: #E6E6FA;
+            --ing-bekon: #F1B6A9;
+            --ing-sos: #FFD1DC;
+            --ing-spalony: #4A4A4A;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial Black', Impact, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+
+        /* --- NAGŁÓWEK I STATYSTYKI --- */
+        header {
+            background-color: var(--header-bg);
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            color: #FF6F61;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
+
+        .time-warning {
+            color: #FF4500;
+            animation: pulse 1s infinite;
+        }
+
+        /* --- GŁÓWNY EKRAN GRY --- */
+        #game-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            flex-grow: 1;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Sekcja zamówienia na górze */
+        #order-board {
+            background: #FFF;
+            padding: 15px 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        #order-board h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #A0A0A0;
+        }
+
+        #order-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 1.3rem;
+        }
+
+        .order-item {
+            padding: 5px 15px;
+            border-radius: 10px;
+            background-color: #F0F0F0;
+            color: #A0A0A0;
+            transition: all 0.3s;
+        }
+
+        .order-item.active {
+            background-color: var(--accent-color);
+            color: #FFF;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .order-item.done {
+            background-color: #E2E2E2;
+            color: #FFF;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        /* Strefa kuchni (Talerz) */
+        #kitchen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        #plate-container {
+            width: 300px;
+            display: flex;
+            flex-direction: column-reverse; /* Składniki układają się od dołu do góry */
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 15px solid var(--plate-color);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        /* Składniki na talerzu */
+        .ingredient-block {
+            width: 220px;
+            height: 35px;
+            border-radius: 15px;
+            margin-bottom: -10px; /* Lekkie nachodzenie na siebie */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            z-index: 1;
+            animation: dropIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border: 3px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: rgba(0,0,0,0.3);
+        }
+
+        .ingredient-block.bottom-bun {
+            height: 40px;
+            border-radius: 10px 10px 25px 25px;
+        }
+
+        .ingredient-block.top-bun {
+            height: 55px;
+            border-radius: 40px 40px 10px 10px;
+        }
+
+        .ingredient-block.burnt {
+            background-color: var(--ing-spalony) !important;
+            color: #FFF;
+            animation: shake 0.4s ease-in-out forwards;
+        }
+
+        /* Sekcja pisania */
+        #typing-area {
+            background: #FFF;
+            padding: 20px 40px;
+            border-radius: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            text-align: center;
+            min-width: 350px;
+        }
+
+        #typing-word {
+            font-size: 3rem;
+            letter-spacing: 3px;
+        }
+
+        .typed-correct {
+            color: #77DD77; /* Pastelowy zielony */
+        }
+
+        .typed-remaining {
+            color: #D3D3D3;
+        }
+
+        .typed-burnt {
+            color: var(--ing-spalony);
+            animation: shake 0.4s ease-in-out forwards;
+        }
+
+        /* --- EKRANY MENU --- */
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(253, 246, 227, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        h2.title-large {
+            font-size: 4rem;
+            color: #FF6F61;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .menu-text {
+            font-size: 1.5rem;
+            color: #7A7A7A;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        button {
+            background-color: #FFB6C1;
+            color: #FFF;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.8rem;
+            font-family: inherit;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #FF9AA2;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 #FF9AA2;
+        }
+
+        /* --- ANIMACJE --- */
+        @keyframes dropIn {
+            0% { transform: translateY(-100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>BURGER DASH</h1>
+        <div class="stats" id="stats-panel" style="display: none;">
+            <div>CZAS: <span id="timer">2:00</span></div>
+            <div>WYNIK: <span id="score">0</span></div>
+        </div>
+    </header>
+
+    <!-- Ekran startowy -->
+    <div id="start-screen">
+        <h2 class="title-large">GOTOWY NA RUSH?</h2>
+        <div class="menu-text">
+            Zbuduj burgera z zamówienia, wpisując składniki od dołu do góry na klawiaturze.<br><br>
+            Uwaga! Jedna zła litera i składnik się spali – musisz wpisać go od nowa!
+        </div>
+        <button onclick="startGame()">START</button>
+    </div>
+
+    <!-- Ekran gry -->
+    <div id="game-area">
+        <div id="order-board">
+            <h2>BIEŻĄCE ZAMÓWIENIE (OD DOŁU DO GÓRY):</h2>
+            <div id="order-list">
+                <!-- Generowane dynamicznie -->
+            </div>
+        </div>
+
+        <div id="kitchen">
+            <div id="plate-container">
+                <!-- Składniki pojawią się tutaj (dzięki flex-direction: column-reverse układają się w górę) -->
+            </div>
+        </div>
+
+        <div id="typing-area">
+            <div id="typing-word">
+                <!-- Generowane dynamicznie -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Ekran końca gry -->
+    <div id="game-over-screen" style="display: none;">
+        <h2 class="title-large">KONIEC ZMIANY!</h2>
+        <div class="menu-text" style="font-size: 2rem; color: #4A4A4A;">
+            OBSŁUŻENI KLIENCI: <span id="final-score" style="color: #FF6F61; font-size: 3rem;">0</span>
+        </div>
+        <button onclick="startGame()">ZAGRAJ PONOWNIE</button>
+    </div>
+
+    <script>
+        // Baza dostępnych składników i ich kolorów (zgodnych z CSS)
+        const INGREDIENTS_DB = {
+            'Bułka': 'var(--ing-bulka)',
+            'Kotlet': 'var(--ing-kotlet)',
+            'Ser': 'var(--ing-ser)',
+            'Pomidor': 'var(--ing-pomidor)',
+            'Ogórek': 'var(--ing-ogorek)',
+            'Sałata': 'var(--ing-salata)',
+            'Cebula': 'var(--ing-cebula)',
+            'Bekon': 'var(--ing-bekon)',
+            'Sos': 'var(--ing-sos)'
+        };
+
+        const FILLINGS = Object.keys(INGREDIENTS_DB).filter(i => i !== 'Bułka');
+
+        // Zmienne stanu gry
+        let score = 0;
+        let timeLeft = 120;
+        let gameInterval;
+        let isGameActive = false;
+        let isBurning = false;
+
+        let currentOrder = [];
+        let currentIngredientIndex = 0; 
+        let typedText = "";
+
+        // Elementy DOM
+        const elStartScreen = document.getElementById('start-screen');
+        const elGameOverScreen = document.getElementById('game-over-screen');
+        const elGameArea = document.getElementById('game-area');
+        const elStatsPanel = document.getElementById('stats-panel');
+        
+        const elTimer = document.getElementById('timer');
+        const elScore = document.getElementById('score');
+        const elFinalScore = document.getElementById('final-score');
+        
+        const elOrderList = document.getElementById('order-list');
+        const elPlate = document.getElementById('plate-container');
+        const elTypingWord = document.getElementById('typing-word');
+
+        // Rozpoczęcie gry
+        function startGame() {
+            score = 0;
+            timeLeft = 120;
+            isGameActive = true;
+            isBurning = false;
+            
+            elScore.innerText = score;
+            updateTimerDisplay();
+            
+            elStartScreen.style.display = 'none';
+            elGameOverScreen.style.display = 'none';
+            elGameArea.style.display = 'flex';
+            elStatsPanel.style.display = 'flex';
+            
+            elTimer.classList.remove('time-warning');
+
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameTick, 1000);
+
+            generateNewOrder();
+        }
+
+        // Pętla czasu
+        function gameTick() {
+            timeLeft--;
+            updateTimerDisplay();
+
+            if (timeLeft <= 10) {
+                elTimer.classList.add('time-warning');
+            }
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function updateTimerDisplay() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            elTimer.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearInterval(gameInterval);
+            elFinalScore.innerText = score;
+            
+            elGameArea.style.display = 'none';
+            elStatsPanel.style.display = 'none';
+            elGameOverScreen.style.display = 'flex';
+        }
+
+        // Tworzenie nowego losowego zamówienia
+        function generateNewOrder() {
+            // Zamówienie zawsze ma bułkę na dole i na górze, i losowe wnętrze (2 do 4 składników)
+            const numFillings = Math.floor(Math.random() * 3) + 2; 
+            currentOrder = ['Bułka']; // Spód (indeks 0 - wpisywany jako pierwszy)
+            
+            for (let i = 0; i < numFillings; i++) {
+                const randomFilling = FILLINGS[Math.floor(Math.random() * FILLINGS.length)];
+                currentOrder.push(randomFilling);
+            }
+            currentOrder.push('Bułka'); // Góra
+
+            currentIngredientIndex = 0;
+            typedText = "";
+            
+            elPlate.innerHTML = ''; // Czyszczenie talerza
+            renderOrderBoard();
+            renderTypingArea();
+        }
+
+        // Renderowanie wizualnej listy zamówień (na górze ekranu)
+        function renderOrderBoard() {
+            elOrderList.innerHTML = '';
+            // Wyświetlamy wizualnie tak jak w menu: góra bułka z lewej, dół z prawej, 
+            // ale żeby było intuicyjnie pokażemy je od lewej (bułka dolna) do prawej.
+            currentOrder.forEach((ingredient, index) => {
+                const div = document.createElement('div');
+                div.className = 'order-item';
+                if (index === currentIngredientIndex) div.classList.add('active');
+                if (index < currentIngredientIndex) div.classList.add('done');
+                div.innerText = ingredient;
+                elOrderList.appendChild(div);
+            });
+        }
+
+        // Renderowanie aktualnie wpisywanego słowa
+        function renderTypingArea() {
+            if (isBurning) return; // Jeśli się pali, ekran obsługuje animację błędu
+
+            const targetWord = currentOrder[currentIngredientIndex];
+            const remainingText = targetWord.substring(typedText.length);
+            
+            elTypingWord.innerHTML = `
+                <span class="typed-correct">${typedText}</span><span class="typed-remaining">${remainingText}</span>
+            `;
+            elTypingWord.className = '';
+        }
+
+        // Nasłuchiwanie klawiatury
+        document.addEventListener('keydown', (e) => {
+            if (!isGameActive || isBurning) return;
+
+            // Ignorowanie klawiszy funkcyjnych, shift, caps lock itp.
+            if (e.key.length > 1) return;
+
+            const targetWord = currentOrder[currentIngredientIndex];
+            const expectedChar = targetWord[typedText.length].toLowerCase();
+            const typedChar = e.key.toLowerCase();
+
+            if (typedChar === expectedChar) {
+                // Dobra litera!
+                typedText += targetWord[typedText.length]; // zachowaj oryginalną wielkość liter z targetWord
+                
+                if (typedText === targetWord) {
+                    // Cały składnik wpisany!
+                    addIngredientToPlate(targetWord, currentIngredientIndex);
+                    currentIngredientIndex++;
+                    typedText = "";
+
+                    if (currentIngredientIndex >= currentOrder.length) {
+                        // Cały burger gotowy!
+                        score++;
+                        elScore.innerText = score;
+                        setTimeout(() => {
+                            generateNewOrder();
+                        }, 400); // Małe opóźnienie, aby gracz zobaczył gotowego burgera
+                    } else {
+                        renderOrderBoard();
+                    }
+                }
+                renderTypingArea();
+
+            } else {
+                // ZŁA LITERA - SKŁADNIK SIĘ PALI!
+                triggerBurnEffect(targetWord);
+            }
+        });
+
+        function triggerBurnEffect(targetWord) {
+            isBurning = true;
+            
+            // 1. Wizualizacja w obszarze tekstu
+            elTypingWord.innerHTML = `<span class="typed-burnt">${targetWord}</span>`;
+            
+            // 2. Wizualizacja spalonego składnika na talerzu
+            const burntBlock = document.createElement('div');
+            burntBlock.className = 'ingredient-block burnt';
+            burntBlock.innerText = "SPALONE!";
+            
+            // Kształt bułki jeśli to spód lub góra
+            if (currentIngredientIndex === 0) burntBlock.classList.add('bottom-bun');
+            if (currentIngredientIndex === currentOrder.length - 1) burntBlock.classList.add('top-bun');
+            
+            elPlate.appendChild(burntBlock);
+
+            // Zresetuj po krótkiej animacji (400ms)
+            setTimeout(() => {
+                isBurning = false;
+                typedText = "";
+                elPlate.removeChild(burntBlock); // usuń spalony element
+                renderTypingArea();
+            }, 500);
+        }
+
+        function addIngredientToPlate(ingredientName, index) {
+            const block = document.createElement('div');
+            block.className = 'ingredient-block';
+            block.style.backgroundColor = INGREDIENTS_DB[ingredientName];
+            block.innerText = ingredientName; // Delikatny podpis na składniku
+
+            // Specjalne kształty dla bułki
+            if (ingredientName === 'Bułka') {
+                if (index === 0) {
+                    block.classList.add('bottom-bun');
+                } else if (index === currentOrder.length - 1) {
+                    block.classList.add('top-bun');
+                }
+            }
+
+            // Modyfikacja szerokości dla zróżnicowania wyglądu
+            if (ingredientName === 'Ser' || ingredientName === 'Sałata') {
+                block.style.width = '230px'; // Trochę szersze
+                if (ingredientName === 'Ser') block.style.height = '15px';
+            }
+            if (ingredientName === 'Cebula' || ingredientName === 'Ogórek') {
+                block.style.width = '190px'; 
+                block.style.height = '20px';
+            }
+
+            elPlate.appendChild(block);
+        }
+    </script>
+</body>
+</html>

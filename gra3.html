@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obrona Zamku</title>
+    <style>
+        /* Resety i bazowe style */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111827; /* Ciemny motyw */
+            color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Główny kontener flexbox */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Obszar gry */
+        #game-area {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #1e3a8a 0%, #111827 100%);
+        }
+
+        /* Zamek po lewej stronie */
+        #castle {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 100px;
+            z-index: 10;
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            border-right: 2px dashed rgba(255,255,255,0.2);
+            padding-right: 20px;
+        }
+
+        /* Styl przeciwników */
+        .enemy {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            will-change: transform; /* Optymalizacja renderowania */
+        }
+
+        .enemy-emoji {
+            font-size: 50px;
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
+        }
+
+        .enemy-word {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            letter-spacing: 1px;
+            margin-top: -5px;
+            border: 1px solid #374151;
+        }
+
+        /* Panel wpisywania tekstu na dole */
+        #typing-area {
+            height: 80px;
+            background-color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 4px solid #374151;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        #typed-text {
+            font-size: 36px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: #60a5fa;
+            min-width: 20px;
+            min-height: 40px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        /* UI (Wynik) */
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 20;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        /* Ekran powitalny / Koniec gry */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            backdrop-filter: blur(4px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #overlay-title {
+            font-size: 64px;
+            margin-bottom: 10px;
+            color: #ef4444;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        #overlay-desc {
+            font-size: 20px;
+            margin-bottom: 30px;
+            color: #9ca3af;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        /* Animacja usunięcia (pokonania) przeciwnika */
+        .enemy-defeated {
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="game-area">
+        <div id="score-board">Wynik: <span id="score">0</span></div>
+        <div id="castle">🏰</div>
+        <!-- Tutaj za pomocą JS będą generowani przeciwnicy -->
+    </div>
+    
+    <div id="typing-area">
+        <span id="typed-text"></span>
+    </div>
+</div>
+
+<!-- Ekran Menu/Game Over -->
+<div id="overlay">
+    <div id="overlay-title">Obrona Zamku</div>
+    <div id="overlay-desc">
+        Wpisuj słowa pojawiające się pod przeciwnikami (używając polskich znaków: ą, ć, ę, ł, ń, ó, ś, ź, ż) i zatwierdzaj je klawiszem <strong>Spacja</strong> lub <strong>Enter</strong>.<br><br>
+        Nie pozwól, aby jakikolwiek przeciwnik dotarł do zamku!
+    </div>
+    <button class="btn" id="start-btn">Rozpocznij Grę</button>
+</div>
+
+<script>
+    // Konfiguracja gry
+    const WORDS = [
+        "zamek", "smoki", "miecz", "magia", "tarcza", "rycerz", 
+        "potwór", "łucznik", "topór", "wiedźma", "pająk", "różdżka", 
+        "klątwa", "wróżka", "ogień", "żelazo", "miedź", "zbroja", 
+        "księga", "gołąb", "zbójca", "upiór", "królowa", "obrona", "czary"
+    ]; // Słowa od 5 do 7 liter zawierające polskie znaki
+    
+    const CASTLE_BOUNDARY = 150; // Punkt X, w którym przeciwnik uderza w zamek
+    
+    // Zmienne stanu gry
+    let isPlaying = false;
+    let score = 0;
+    let currentInput = "";
+    let enemies = [];
+    let animationFrameId;
+    let lastTime = 0;
+    
+    // Trudność - stopniowo zwiększana
+    let enemySpawnRate = 2500; // ms
+    let timeSinceLastSpawn = 0;
+    let baseEnemySpeed = 1.0;
+
+    // Referencje do elementów DOM
+    const gameArea = document.getElementById('game-area');
+    const typedTextDisplay = document.getElementById('typed-text');
+    const scoreDisplay = document.getElementById('score');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const startBtn = document.getElementById('start-btn');
+
+    // Klasa przeciwnika
+    class Enemy {
+        constructor() {
+            // Losowanie słowa
+            this.word = WORDS[Math.floor(Math.random() * WORDS.length)];
+            
+            // Pozycja początkowa i prędkość
+            this.x = window.innerWidth;
+            // Ograniczenie by nie wychodził poza ekran (góra/dół)
+            const minY = 50;
+            const maxY = gameArea.clientHeight - 120;
+            this.y = Math.random() * (maxY - minY) + minY;
+            
+            // Lekko losowa prędkość bazująca na aktualnym poziomie trudności
+            this.speed = baseEnemySpeed + (Math.random() * 0.8);
+            
+            // Tworzenie elementu w DOM
+            this.element = document.createElement('div');
+            this.element.className = 'enemy';
+            this.element.innerHTML = `
+                <div class="enemy-emoji">👹</div>
+                <div class="enemy-word">${this.word}</div>
+            `;
+            
+            this.element.style.top = `${this.y}px`;
+            // Ustawiamy transform z lewej strony
+            this.element.style.transform = `translateX(${this.x}px)`;
+            
+            gameArea.appendChild(this.element);
+        }
+
+        update(deltaTime) {
+            // Ruch uwzględniający opóźnienia klatek (60fps to około 16.6ms na klatkę)
+            const moveAmount = this.speed * (deltaTime / 16.6);
+            this.x -= moveAmount;
+            this.element.style.transform = `translateX(${this.x}px)`;
+        }
+
+        destroy() {
+            this.element.classList.add('enemy-defeated');
+            setTimeout(() => {
+                if(this.element.parentNode) {
+                    this.element.parentNode.removeChild(this.element);
+                }
+            }, 200); // Czas trwania animacji CSS
+        }
+    }
+
+    // --- PĘTLA GRY ---
+    function gameLoop(timestamp) {
+        if (!isPlaying) return;
+
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+        timeSinceLastSpawn += deltaTime;
+
+        // Pojawianie się nowych przeciwników
+        if (timeSinceLastSpawn > enemySpawnRate) {
+            enemies.push(new Enemy());
+            timeSinceLastSpawn = 0;
+            
+            // Powolne zwiększanie poziomu trudności (ograniczone limity)
+            if (enemySpawnRate > 800) enemySpawnRate -= 20;
+            if (baseEnemySpeed < 4.0) baseEnemySpeed += 0.05;
+        }
+
+        // Aktualizacja przeciwników i sprawdzanie kolizji z zamkiem
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            enemy.update(deltaTime);
+
+            // Sprawdzenie czy przeciwnik dotarł do zamku (koniec gry)
+            if (enemy.x <= CASTLE_BOUNDARY) {
+                gameOver();
+                return; // Przerwij pętlę po Game Over
+            }
+        }
+
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // --- LOGIKA KLAWIATURY I SPRAWDZANIA SŁÓW ---
+    document.addEventListener('keydown', (e) => {
+        if (!isPlaying) return;
+
+        // Zapobieganie domyślnym akcjom np. przewijaniu strony na spacji
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            checkWord();
+            // Zgodnie z wytycznymi: jeśli spacja/enter -> wyczyść tekst niezależnie od wyniku
+            currentInput = "";
+            updateDisplay();
+            return;
+        }
+
+        if (e.key === 'Backspace') {
+            currentInput = currentInput.slice(0, -1);
+            updateDisplay();
+            return;
+        }
+
+        // Akceptuj tylko litery (alfabet łaciński + polskie znaki diakrytyczne)
+        if (/^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]$/.test(e.key)) {
+            currentInput += e.key.toLowerCase();
+            updateDisplay();
+        }
+    });
+
+    function checkWord() {
+        const wordToMatch = currentInput.trim().toLowerCase();
+        
+        // Szukamy indeksu pierwszego przeciwnika, który ma nad sobą to słowo
+        const index = enemies.findIndex(e => e.word === wordToMatch);
+        
+        if (index !== -1) {
+            // Sukces - usunięcie przeciwnika
+            const enemy = enemies[index];
+            enemy.destroy(); // Usuwa z DOM z animacją
+            enemies.splice(index, 1); // Usuwa z tablicy logiki
+            
+            score += 10;
+            scoreDisplay.innerText = score;
+        }
+    }
+
+    function updateDisplay() {
+        typedTextDisplay.innerText = currentInput;
+    }
+
+    // --- ZARZĄDZANIE STANEM GRY ---
+    function startGame() {
+        // Reset zmiennych
+        isPlaying = true;
+        score = 0;
+        currentInput = "";
+        enemySpawnRate = 2500;
+        baseEnemySpeed = 1.0;
+        timeSinceLastSpawn = 0;
+        lastTime = performance.now();
+        
+        scoreDisplay.innerText = score;
+        updateDisplay();
+        
+        // Czyszczenie poprzednich przeciwników
+        enemies.forEach(e => {
+            if (e.element.parentNode) e.element.parentNode.removeChild(e.element);
+        });
+        enemies = [];
+
+        // Ukrycie overlay'a i rozpoczęcie pętli
+        overlay.classList.add('hidden');
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver() {
+        isPlaying = false;
+        cancelAnimationFrame(animationFrameId);
+        
+        // Pokaż ekran końcowy
+        overlayTitle.innerText = "Koniec Gry!";
+        document.getElementById('overlay-desc').innerHTML = `Twój zamek został zniszczony.<br><br>Zdobyte punkty: <strong>${score}</strong>`;
+        startBtn.innerText = "Zagraj ponownie";
+        overlay.classList.remove('hidden');
+    }
+
+    // Nasłuchiwanie na przycisk startowy
+    startBtn.addEventListener('click', startGame);
+
+</script>
+</body>
+</html>
