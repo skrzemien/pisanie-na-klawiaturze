@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loot-Box Tycoon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Animacja unoszenia się skrzyni */
+        .float-animation {
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Animacja otwierania (skakanie i powiększanie) */
+        .open-animation {
+            animation: popOpen 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popOpen {
+            0% { transform: scale(1) rotate(0deg); }
+            20% { transform: scale(0.9) rotate(-5deg); }
+            50% { transform: scale(1.3) rotate(5deg); }
+            100% { transform: scale(1.1) rotate(0deg); }
+        }
+
+        /* Animacja błędu wpisywania */
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+
+        /* Animacja pojawienia się łupu */
+        .loot-reveal {
+            animation: revealUp 0.8s ease-out forwards;
+        }
+
+        @keyframes revealUp {
+            0% { opacity: 0; transform: translateY(40px) scale(0.5); }
+            70% { transform: translateY(-10px) scale(1.2); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Klasy rzadkości - efekty poświaty */
+        .glow-common { text-shadow: 0 0 10px rgba(156, 163, 175, 0.8); }
+        .glow-rare { text-shadow: 0 0 15px rgba(96, 165, 250, 0.8); }
+        .glow-legendary { text-shadow: 0 0 20px rgba(250, 204, 21, 1); }
+
+        .border-common { border-color: #9ca3af; box-shadow: 0 0 10px rgba(156, 163, 175, 0.3); }
+        .border-rare { border-color: #60a5fa; box-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
+        .border-legendary { border-color: #facc15; box-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between py-10">
+
+    <!-- Nagłówek -->
+    <header class="text-center mb-4">
+        <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 drop-shadow-lg mb-2">
+            Loot-Box Tycoon
+        </h1>
+        <p class="text-gray-300 text-sm opacity-80">Wyklikaj słowo kluczowe, aby otworzyć skrzynię!</p>
+    </header>
+
+    <!-- Główna sekcja gry (Skrzynia i słowo) -->
+    <main class="flex-1 flex flex-col items-center justify-center relative w-full max-w-2xl">
+        
+        <!-- UI Rzadkości skrzyni -->
+        <div id="rarity-badge" class="px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-4 transition-all duration-300">
+            Szukam skrzyni...
+        </div>
+
+        <!-- Słowo do wpisania -->
+        <div id="word-container" class="text-4xl font-mono tracking-wider mb-10 transition-colors duration-200">
+            <span id="typed-text" class="text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span><span id="remaining-text" class="text-gray-400 opacity-70"></span>
+        </div>
+
+        <!-- Obszar Skrzyni -->
+        <div class="relative h-64 flex items-center justify-center w-full">
+            <!-- Skrzynia -->
+            <div id="chest-element" class="text-9xl cursor-default select-none float-animation transition-all duration-300 z-10">
+                📦
+            </div>
+
+            <!-- Łup (domyślnie ukryty pod skrzynią) -->
+            <div id="loot-display" class="absolute inset-0 flex flex-col items-center justify-center opacity-0 pointer-events-none z-20">
+                <div id="loot-emoji" class="text-8xl mb-2 drop-shadow-2xl">💎</div>
+                <div id="loot-name" class="text-2xl font-bold rounded bg-black bg-opacity-50 px-4 py-1">Diament</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Ekwipunek -->
+    <section class="w-full max-w-4xl px-4 mt-8">
+        <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-6 border border-white border-opacity-20">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                <span>🎒</span> Twój Ekwipunek <span id="item-count" class="text-sm font-normal text-gray-400 ml-auto">Przedmioty: 0</span>
+            </h2>
+            
+            <div id="inventory-grid" class="flex flex-wrap gap-4 min-h-[100px] items-start justify-start">
+                <!-- Pusty stan -->
+                <p id="empty-inventory" class="text-gray-400 w-full text-center italic mt-4">Ekwipunek jest pusty. Otwórz skrzynię!</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Konfiguracja danych gry
+        const RARITIES = {
+            COMMON: { id: 'common', name: 'Pospolita', color: 'text-gray-400', bg: 'bg-gray-700', border: 'border-common', glow: 'glow-common', chance: 60 },
+            RARE: { id: 'rare', name: 'Rzadka', color: 'text-blue-400', bg: 'bg-blue-900', border: 'border-rare', glow: 'glow-rare', chance: 30 },
+            LEGENDARY: { id: 'legendary', name: 'Legendarna', color: 'text-yellow-400', bg: 'bg-yellow-700', border: 'border-legendary', glow: 'glow-legendary', chance: 10 }
+        };
+
+        const WORDS = {
+            common: ["Klucz", "Pudlo", "Zamek", "Drzwi", "Deska", "Kamien", "Wytrych", "Zlom"],
+            rare: ["SrebrnyKlucz", "MocnyWytrych", "TajnaSkrytka", "ZelaznaSkrzynia", "MagicznyZamek", "Krysztal"],
+            legendary: ["LegendarnyWytrych", "StarozytnyArtefakt", "ZlotyKluczPrzeznaczenia", "SmoczaSkrzynia", "OkoCyklopa"]
+        };
+
+        const LOOT = {
+            common: [
+                { emoji: "🪙", name: "Miedziana Moneta" },
+                { emoji: "🍎", name: "Zwykłe Jabłko" },
+                { emoji: "🗡️", name: "Zardzewiały Sztylet" },
+                { emoji: "🪵", name: "Kawałek Drewna" }
+            ],
+            rare: [
+                { emoji: "💍", name: "Srebrny Pierścień" },
+                { emoji: "⚔️", name: "Stalowy Miecz" },
+                { emoji: "🛡️", name: "Ciężka Tarcza" },
+                { emoji: "🧪", name: "Mikstura Zdrowia" }
+            ],
+            legendary: [
+                { emoji: "💎", name: "Diament Nieskończoności" },
+                { emoji: "👑", name: "Korona Zaginionego Króla" },
+                { emoji: "🐉", name: "Jajo Smoka" },
+                { emoji: "🌌", name: "Fragment Galaktyki" }
+            ]
+        };
+
+        // Stan gry
+        let currentRarity = null;
+        let targetWord = "";
+        let typedProgress = "";
+        let isOpening = false;
+        let inventory = [];
+
+        // Elementy DOM
+        const wordContainer = document.getElementById('word-container');
+        const typedTextEl = document.getElementById('typed-text');
+        const remainingTextEl = document.getElementById('remaining-text');
+        const chestElement = document.getElementById('chest-element');
+        const rarityBadge = document.getElementById('rarity-badge');
+        const lootDisplay = document.getElementById('loot-display');
+        const lootEmoji = document.getElementById('loot-emoji');
+        const lootName = document.getElementById('loot-name');
+        const inventoryGrid = document.getElementById('inventory-grid');
+        const emptyInventoryMsg = document.getElementById('empty-inventory');
+        const itemCountEl = document.getElementById('item-count');
+
+        // Funkcja losująca rzadkość na podstawie prawdopodobieństwa
+        function getRandomRarity() {
+            const rand = Math.random() * 100;
+            if (rand < RARITIES.LEGENDARY.chance) return RARITIES.LEGENDARY;
+            if (rand < RARITIES.LEGENDARY.chance + RARITIES.RARE.chance) return RARITIES.RARE;
+            return RARITIES.COMMON;
+        }
+
+        // Pobiera losowy element z tablicy
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        // Inicjalizacja nowej skrzyni
+        function spawnNewChest() {
+            isOpening = false;
+            typedProgress = "";
+            
+            // Losowanie nowej zawartości
+            currentRarity = getRandomRarity();
+            targetWord = getRandomItem(WORDS[currentRarity.id]);
+
+            // Reset UI skrzyni
+            chestElement.innerText = "📦";
+            chestElement.className = "text-9xl cursor-default select-none float-animation transition-all duration-300 z-10";
+            chestElement.style.opacity = "1";
+            
+            // Ukrycie łupu
+            lootDisplay.classList.remove('loot-reveal');
+            lootDisplay.style.opacity = "0";
+
+            // Aktualizacja UI słowa
+            updateWordUI();
+
+            // Aktualizacja odznaki rzadkości
+            rarityBadge.className = `px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-4 transition-all duration-300 ${currentRarity.bg} text-white shadow-lg`;
+            rarityBadge.innerText = `Rzadkość: ${currentRarity.name}`;
+            
+            // Kolorowanie słowa wg. rzadkości
+            remainingTextEl.className = `${currentRarity.color} opacity-70 ${currentRarity.glow}`;
+        }
+
+        // Aktualizacja widoku wpisywanego słowa
+        function updateWordUI() {
+            typedTextEl.innerText = targetWord.substring(0, typedProgress.length);
+            remainingTextEl.innerText = targetWord.substring(typedProgress.length);
+        }
+
+        // Otwieranie skrzyni
+        function openChest() {
+            isOpening = true;
+            
+            // Usuń animację unoszenia i dodaj otwierania
+            chestElement.classList.remove('float-animation');
+            chestElement.classList.add('open-animation');
+            
+            // Zmień ikonę na otwartą po krótkim czasie
+            setTimeout(() => {
+                chestElement.innerText = "🎁";
+            }, 150);
+
+            // Ukryj tekst i odznakę
+            wordContainer.style.opacity = "0";
+            rarityBadge.style.opacity = "0";
+
+            // Wylosuj łup
+            const droppedItem = getRandomItem(LOOT[currentRarity.id]);
+            
+            // Pokaż łup po zakończeniu animacji skrzyni
+            setTimeout(() => {
+                chestElement.style.opacity = "0.2"; // Przyciemnij skrzynię
+                
+                lootEmoji.innerText = droppedItem.emoji;
+                lootName.innerText = droppedItem.name;
+                lootName.className = `text-2xl font-bold rounded bg-black bg-opacity-70 px-4 py-1 mt-4 ${currentRarity.color} ${currentRarity.glow}`;
+                
+                lootDisplay.style.opacity = "1";
+                lootDisplay.classList.add('loot-reveal');
+
+                // Dodaj do ekwipunku
+                addToInventory({ ...droppedItem, rarity: currentRarity });
+
+            }, 600);
+
+            // Zresetuj i przygotuj nową skrzynię po chwili
+            setTimeout(() => {
+                wordContainer.style.opacity = "1";
+                rarityBadge.style.opacity = "1";
+                spawnNewChest();
+            }, 3000);
+        }
+
+        // Dodawanie przedmiotu do ekwipunku
+        function addToInventory(item) {
+            inventory.push(item);
+            itemCountEl.innerText = `Przedmioty: ${inventory.length}`;
+            
+            if (emptyInventoryMsg) {
+                emptyInventoryMsg.style.display = 'none';
+            }
+
+            // Stwórz kartę przedmiotu
+            const itemCard = document.createElement('div');
+            itemCard.className = `flex flex-col items-center justify-center p-3 rounded-xl border-2 bg-gray-800 bg-opacity-50 backdrop-blur-sm transition-transform hover:scale-105 cursor-default w-24 h-24 ${item.rarity.border}`;
+            
+            itemCard.innerHTML = `
+                <span class="text-4xl drop-shadow-md mb-1">${item.emoji}</span>
+                <span class="text-[10px] text-center leading-tight font-semibold text-gray-200 line-clamp-2">${item.name}</span>
+            `;
+
+            // Dodaj na początek listy
+            inventoryGrid.prepend(itemCard);
+        }
+
+        // Animacja pomyłki
+        function triggerMistakeAnimation() {
+            wordContainer.classList.remove('shake-animation');
+            void wordContainer.offsetWidth; // Wywołanie reflow aby zresetować animację
+            wordContainer.classList.add('shake-animation');
+            remainingTextEl.classList.add('text-red-400');
+            setTimeout(() => {
+                remainingTextEl.classList.remove('text-red-400');
+            }, 400);
+        }
+
+        // Obsługa klawiatury
+        window.addEventListener('keydown', (e) => {
+            if (isOpening) return; // Zablokuj pisanie podczas animacji
+
+            // Ignoruj klawisze funkcyjne (Shift, Caps, etc)
+            if (e.key.length > 1) return;
+
+            const expectedChar = targetWord[typedProgress.length];
+            
+            // Porównanie ignorujące wielkość liter dla wygody gracza
+            if (e.key.toLowerCase() === expectedChar.toLowerCase()) {
+                typedProgress += expectedChar; // Zapisujemy oryginalny znak
+                updateWordUI();
+
+                // Sprawdź czy całe słowo zostało wpisane
+                if (typedProgress === targetWord) {
+                    openChest();
+                }
+            } else {
+                // Błąd wpisywania
+                triggerMistakeAnimation();
+            }
+        });
+
+        // Start gry
+        spawnNewChest();
+
+    </script>
+</body>
+</html>

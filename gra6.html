@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            --term-green: #33ff33;
+            --term-bg: #050a05;
+            --neon-blue: #00ffff;
+            --error-red: #ff3333;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--term-bg);
+            color: var(--term-green);
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            text-transform: uppercase;
+        }
+
+        /* Efekt CRT Scanlines na całej stronie */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.2) 50%,
+                rgba(0, 0, 0, 0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Subtelne migotanie ekranu */
+        .flicker {
+            animation: flickerAnim 0.15s infinite alternate;
+        }
+
+        @keyframes flickerAnim {
+            0% { opacity: 0.95; }
+            100% { opacity: 1; }
+        }
+
+        /* Poprawnie wpisana litera */
+        .neon-blue {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        /* Aktualna litera do wpisania */
+        .current-char {
+            background-color: var(--term-green);
+            color: var(--term-bg);
+            box-shadow: 0 0 8px var(--term-green);
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { background-color: var(--term-green); color: var(--term-bg); }
+            50% { background-color: transparent; color: var(--term-green); }
+        }
+
+        /* Efekt Glitch przy błędzie */
+        .glitch {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); color: var(--term-green); text-shadow: none; }
+            20% { transform: translate(-5px, 2px); color: var(--error-red); text-shadow: 0 0 8px var(--error-red); }
+            40% { transform: translate(5px, -2px); color: var(--neon-blue); }
+            60% { transform: translate(-5px, -2px); color: var(--error-red); text-shadow: 0 0 8px var(--error-red); }
+            80% { transform: translate(5px, 2px); color: var(--term-green); }
+        }
+
+        /* Poświata głównego kontenera */
+        .terminal-glow {
+            text-shadow: 0 0 4px rgba(51, 255, 51, 0.6);
+        }
+    </style>
+</head>
+<body class="flicker flex flex-col items-center justify-center h-screen select-none relative">
+    
+    <!-- Warstwa ze scanlines -->
+    <div class="scanlines"></div>
+
+    <div class="z-10 w-full max-w-4xl p-6 flex flex-col h-full terminal-glow">
+        
+        <!-- Nagłówek (HUD) -->
+        <div class="flex justify-between items-center border-b-2 border-green-600 pb-4 mb-10 text-2xl md:text-3xl">
+            <div>
+                <span>STATUS: </span>
+                <span id="status-indicator" class="text-green-400">GOTOWY</span>
+            </div>
+            <div>
+                <span>PLIKI: </span>
+                <span id="score-display">0</span>
+            </div>
+            <div>
+                <span>CZAS: </span>
+                <span id="time-display" class="text-red-400">30.0</span><span>s</span>
+            </div>
+        </div>
+
+        <!-- Główny obszar gry -->
+        <div class="flex-grow flex flex-col items-center justify-center relative">
+            
+            <!-- Ekran startowy -->
+            <div id="start-screen" class="text-center">
+                <h1 class="text-5xl md:text-7xl mb-6 font-bold tracking-widest">HACKER TERMINAL</h1>
+                <p class="text-xl md:text-2xl mb-8">Odszyfruj pliki przepisując komendy bezbłędnie.</p>
+                <p class="text-xl text-green-200">START: 30s | ZA HACK: +5s</p>
+                <p class="mt-12 text-2xl md:text-3xl animate-pulse">Naciśnij [ENTER] aby rozpocząć logowanie...</p>
+            </div>
+
+            <!-- Ekran gry (słowo) -->
+            <div id="game-screen" class="hidden text-center w-full">
+                <p class="text-xl md:text-2xl text-green-600 mb-4 tracking-widest">TRWA ODSZYFROWYWANIE:</p>
+                <div id="word-display" class="text-4xl md:text-6xl font-bold tracking-widest break-all px-4 py-8">
+                    <!-- Litery będą generowane tutaj przez JS -->
+                </div>
+            </div>
+
+            <!-- Ekran końca gry -->
+            <div id="game-over-screen" class="hidden text-center">
+                <h2 class="text-5xl md:text-7xl text-red-500 mb-6 font-bold" style="text-shadow: 0 0 15px red;">SYSTEM ZABLOKOWANY</h2>
+                <p class="text-3xl mb-4">Wykryto nieautoryzowany dostęp.</p>
+                <p class="text-2xl mb-12">Zhakowane pliki: <span id="final-score" class="text-neon-blue font-bold text-4xl">0</span></p>
+                <p class="text-2xl animate-pulse">Naciśnij [ENTER] aby zrestartować proces...</p>
+            </div>
+
+        </div>
+
+        <!-- Stopka -->
+        <div class="border-t-2 border-green-600 pt-4 mt-10 text-lg md:text-xl flex justify-between">
+            <span>root@mainframe:~#</span>
+            <span class="animate-pulse">_</span>
+        </div>
+    </div>
+
+    <script>
+        // Baza 'plików' do zhakowania
+        const filesToHack = [
+            "sudo_access_99!",
+            "connect:admin_123",
+            "root/reboot?now",
+            "sys.crack(0x00)",
+            "rm_-rf_/*",
+            "bypass_firewall()",
+            "inject_payload::true",
+            "chmod_777_/",
+            "SSH_port:22_open",
+            "decrypt(pass_hash)",
+            "echo_\"hacked\"",
+            "ping_-c_4_127.0.0.1",
+            "netstat_-ano",
+            "kill_-9_1337",
+            "cat_/etc/shadow",
+            "ssh_root@10.0.0.5",
+            "eval(base64_decode())",
+            "drop_table_users;",
+            "wget_http://malware.exe",
+            "chown_root:root_/"
+        ];
+
+        let currentFile = "";
+        let typedIndex = 0;
+        let time = 30.0;
+        let score = 0;
+        let isPlaying = false;
+        let timerInterval = null;
+
+        // Elementy DOM
+        const wordDisplay = document.getElementById('word-display');
+        const timeDisplay = document.getElementById('time-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const statusIndicator = document.getElementById('status-indicator');
+        
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScore = document.getElementById('final-score');
+
+        function startGame() {
+            score = 0;
+            time = 30.0;
+            isPlaying = true;
+            
+            scoreDisplay.innerText = score;
+            timeDisplay.innerText = time.toFixed(1);
+            timeDisplay.classList.remove('text-red-600');
+            timeDisplay.classList.add('text-red-400');
+            statusIndicator.innerText = "HAKOWANIE...";
+            statusIndicator.classList.add('text-yellow-400');
+
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            loadNextFile();
+
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTime, 100);
+        }
+
+        function updateTime() {
+            time -= 0.1;
+            
+            // Kolorowanie czasu gdy jest go mało
+            if(time <= 3.0) {
+                timeDisplay.classList.add('text-red-600');
+                timeDisplay.classList.remove('text-red-400');
+            } else {
+                timeDisplay.classList.remove('text-red-600');
+                timeDisplay.classList.add('text-red-400');
+            }
+
+            if(time <= 0) {
+                time = 0;
+                endGame();
+            }
+            timeDisplay.innerText = time.toFixed(1);
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(timerInterval);
+            
+            statusIndicator.innerText = "ZABLOKOWANY";
+            statusIndicator.classList.remove('text-yellow-400', 'text-green-400');
+            statusIndicator.classList.add('text-red-500');
+
+            gameScreen.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+            finalScore.innerText = score;
+        }
+
+        function loadNextFile() {
+            // Losowanie pliku
+            currentFile = filesToHack[Math.floor(Math.random() * filesToHack.length)].toUpperCase();
+            typedIndex = 0;
+            renderWord();
+        }
+
+        function renderWord() {
+            wordDisplay.innerHTML = "";
+            for(let i = 0; i < currentFile.length; i++) {
+                const span = document.createElement('span');
+                span.innerText = currentFile[i];
+                
+                if(i < typedIndex) {
+                    // Wpisane poprawnie
+                    span.className = "neon-blue";
+                } else if (i === typedIndex) {
+                    // Aktualna litera do wpisania
+                    span.className = "current-char";
+                } else {
+                    // Do wpisania
+                    span.className = "text-green-700 opacity-60";
+                }
+                
+                wordDisplay.appendChild(span);
+            }
+        }
+
+        // Nasłuchiwanie klawiatury
+        document.addEventListener('keydown', (e) => {
+            // Ignorowanie klawiszy funkcyjnych
+            if(e.ctrlKey || e.altKey || e.metaKey || e.key === 'Tab') return;
+
+            if(!isPlaying) {
+                if(e.key === 'Enter') startGame();
+                return;
+            }
+
+            // Zapobieganie domyślnym akcjom np. scrollowaniu spacją
+            if(e.key.length === 1 || e.key === ' ') {
+                e.preventDefault(); 
+            }
+
+            // Ignorowanie wciśnięć np. Shift, CapsLock
+            if(e.key.length !== 1) return;
+
+            const typedChar = e.key.toUpperCase();
+            const expectedChar = currentFile[typedIndex];
+
+            if(typedChar === expectedChar) {
+                // Poprawne trafienie
+                typedIndex++;
+                renderWord();
+
+                // Sprawdzenie czy słowo zostało skończone
+                if(typedIndex === currentFile.length) {
+                    score++;
+                    scoreDisplay.innerText = score;
+                    time += 5.0; // Dodaj 5 sekund
+                    
+                    // Efekt "sukcesu"
+                    wordDisplay.classList.add('text-white', 'scale-110');
+                    setTimeout(() => {
+                        wordDisplay.classList.remove('text-white', 'scale-110');
+                        loadNextFile();
+                    }, 100);
+                }
+            } else {
+                // Błąd - uruchomienie efektu glitch
+                wordDisplay.classList.remove('glitch');
+                // Wymuszenie reflow aby animacja mogła się zrestartować
+                void wordDisplay.offsetWidth; 
+                wordDisplay.classList.add('glitch');
+            }
+        });
+    </script>
+</body>
+</html>
