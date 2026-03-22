@@ -1,0 +1,402 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    overflow-x: hidden;
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+
+.float-animation {
+    animation: float 2.5s ease-in-out infinite;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-20px); }
+}
+
+.open-animation {
+    animation: popOpen 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes popOpen {
+    0%   { transform: scale(1)   rotate(0deg);  }
+    20%  { transform: scale(0.9) rotate(-5deg); }
+    50%  { transform: scale(1.3) rotate(5deg);  }
+    100% { transform: scale(1.1) rotate(0deg);  }
+}
+
+.shake-animation {
+    animation: shake 0.4s ease-in-out;
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0);    }
+    25%      { transform: translateX(-10px); }
+    50%      { transform: translateX(10px);  }
+    75%      { transform: translateX(-10px); }
+}
+
+.loot-reveal {
+    animation: revealUp 0.8s ease-out forwards;
+}
+@keyframes revealUp {
+    0%   { opacity: 0; transform: translateY(40px) scale(0.5);  }
+    70%  {             transform: translateY(-10px) scale(1.2); }
+    100% { opacity: 1; transform: translateY(0)     scale(1);   }
+}
+
+@keyframes coinFlip {
+    0%   { transform: scale(0)   rotateY(0deg);   }
+    50%  { transform: scale(1.3) rotateY(180deg); }
+    100% { transform: scale(1)   rotateY(360deg); }
+}
+.coin-flip { animation: coinFlip 0.5s ease-out forwards; }
+
+/* ── Rarity Glows ───────────────────────────────────────── */
+
+.glow-common    { text-shadow: 0 0 10px rgba(156, 163, 175, 0.8); }
+.glow-rare      { text-shadow: 0 0 15px rgba(96,  165, 250, 0.8); }
+.glow-legendary { text-shadow: 0 0 20px rgba(250, 204, 21,  1);   }
+.glow-mythic    {
+    text-shadow:
+        0 0 30px rgba(255, 80, 255, 1),
+        0 0 60px rgba(255, 80, 255, 0.6);
+}
+
+/* ── Rarity Borders ─────────────────────────────────────── */
+
+.border-common    { border-color: #9ca3af; box-shadow: 0 0 10px rgba(156, 163, 175, 0.3); }
+.border-rare      { border-color: #60a5fa; box-shadow: 0 0 15px rgba(96,  165, 250, 0.4); }
+.border-legendary { border-color: #facc15; box-shadow: 0 0 20px rgba(250, 204, 21,  0.5); }
+.border-mythic    {
+    border-color: #e879f9;
+    box-shadow:
+        0 0 30px rgba(232, 121, 249, 0.8),
+        0 0 60px rgba(232, 121, 249, 0.4);
+}
+
+/* ── Mythic Animated Background ─────────────────────────── */
+
+.bg-mythic-anim {
+    background: linear-gradient(90deg, #4a0072, #7c0092, #b005c2, #7c0092, #4a0072);
+    background-size: 300% 100%;
+    animation: mythicBg 2s ease infinite;
+}
+@keyframes mythicBg {
+    0%, 100% { background-position: 0%   50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+/* ── Mythic Chest Pulse ──────────────────────────────────── */
+
+.mythic-chest-pulse {
+    filter: drop-shadow(0 0 20px #e879f9) drop-shadow(0 0 40px #b005c2);
+    animation:
+        mythicPulse 1s ease-in-out infinite,
+        float       2.5s ease-in-out infinite;
+}
+@keyframes mythicPulse {
+    0%, 100% { filter: drop-shadow(0 0 20px #e879f9) drop-shadow(0 0 40px #b005c2); }
+    50%      { filter: drop-shadow(0 0 35px #ff4fff) drop-shadow(0 0 70px #d000ff); }
+}
+
+/* ── Inventory Item Card ────────────────────────────────── */
+
+.item-card {
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    position: relative;
+}
+.item-card:hover { transform: scale(1.1); }
+
+.sell-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    font-size: 11px;
+    background: rgba(234, 179, 8, 0.95);
+    color: #000;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-weight: 800;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.item-card:hover .sell-btn { opacity: 1; }
+
+/* ── Modal Overlay ──────────────────────────────────────── */
+
+#item-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+#item-modal.show { display: flex; }
+
+/* ── Gold Pulse ─────────────────────────────────────────── */
+
+@keyframes goldPulse {
+    0%   { transform: scale(1);    }
+    50%  { transform: scale(1.25); color: #fbbf24; }
+    100% { transform: scale(1);    }
+}
+.gold-pulse { animation: goldPulse 0.4s ease-out; }
+
+/* ── Inventory Scrollbar ────────────────────────────────── */
+
+#inventory-grid::-webkit-scrollbar       { width: 6px; }
+#inventory-grid::-webkit-scrollbar-track { background: transparent; }
+#inventory-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+/* ── Toast Notification ─────────────────────────────────── */
+
+#toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(30, 30, 40, 0.95);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── Character Panel ────────────────────────────────────── */
+
+.character-panel {
+    flex-shrink: 0;
+    width: 220px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.character-panel-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.05em;
+    color: #e2e8f0;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 12px;
+}
+
+/* ── Equipment Slot Grid ────────────────────────────────── */
+
+.equip-slots-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.equip-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 10px 6px;
+    min-height: 80px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.equip-slot:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.04);
+}
+
+/* Drag-over drop target highlight */
+.equip-slot.drag-over {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.12);
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    border-style: solid;
+}
+
+/* Empty slot placeholder icon */
+.slot-icon {
+    font-size: 2.2rem;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+    line-height: 1;
+}
+
+.slot-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 0.2s;
+}
+
+/* Filled slot */
+.equip-slot.filled .slot-icon  { opacity: 1;    font-size: 2.8rem; }
+.equip-slot.filled .slot-label { color: rgba(255, 255, 255, 0.9); }
+.equip-slot.filled {
+    border-style: solid;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Unequip hint on hover when filled */
+.equip-slot.filled::after {
+    content: '× Zdejmij';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fca5a5;
+    background: rgba(0,0,0,0.55);
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.equip-slot.filled:hover::after { opacity: 1; }
+
+/* Slot name tag on filled item */
+.slot-item-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+/* ── Equip hint text ────────────────────────────────────── */
+
+.equip-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ── Character Stats Box ────────────────────────────────── */
+
+.char-stats-box {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.char-stats-title {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.char-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.char-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.85);
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.char-stat-row:hover { background: rgba(255,255,255,0.08); }
+
+.char-stat-val {
+    font-weight: 800;
+    font-size: 18px;
+    color: #fff;
+    min-width: 34px;
+    text-align: right;
+    transition: color 0.3s;
+}
+
+.char-stat-total {
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin-top: 6px;
+    padding-top: 10px;
+}
+.char-stat-total .char-stat-val {
+    color: #fde68a;
+    font-size: 20px;
+}
+
+/* Stat value bump animation */
+@keyframes statBump {
+    0%   { transform: scale(1);    }
+    40%  { transform: scale(1.4);  color: #86efac; }
+    100% { transform: scale(1);    }
+}
+.stat-bump { animation: statBump 0.35s ease-out; }
+
+/* ── Equip Modal Buttons ────────────────────────────────── */
+
+.equip-modal-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+    transition: background 0.15s, transform 0.15s, border-color 0.15s;
+}
+.equip-modal-btn span {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.7);
+}
+.equip-modal-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+    transform: scale(1.08);
+}
+.equip-modal-btn.slot-occupied {
+    border-color: #facc15;
+    background: rgba(250,204,21,0.1);
+}
+.equip-modal-btn.slot-occupied span { color: #facc15; }

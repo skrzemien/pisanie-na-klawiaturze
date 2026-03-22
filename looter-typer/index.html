@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loot-Box Tycoon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-between py-10">
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <!-- Header -->
+    <header class="text-center mb-4 w-full max-w-6xl px-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1
+                    class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 drop-shadow-lg mb-2">
+                    Loot-Box Tycoon
+                </h1>
+                <p class="text-gray-200 text-lg font-medium opacity-100">Wpisz słowo kluczowe, aby otworzyć skrzynię!
+                </p>
+            </div>
+            <!-- Gold Counter -->
+            <div
+                class="flex flex-col items-center bg-yellow-900 bg-opacity-60 border-2 border-yellow-500 rounded-2xl px-6 py-4 shadow-xl">
+                <span class="text-yellow-200 text-sm font-bold uppercase tracking-widest mb-1">Złoto</span>
+                <span id="gold-display"
+                    class="text-yellow-300 text-4xl font-extrabold drop-shadow-[0_0_10px_rgba(250,204,21,1)]">0</span>
+                <span class="text-yellow-500 text-xl leading-none mt-1">🪙</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Middle row: Game area + Character Panel -->
+    <div class="w-full max-w-6xl px-4 flex gap-6 items-start">
+
+        <!-- Main game section -->
+        <main class="flex-1 flex flex-col items-center justify-center relative">
+
+            <!-- Rarity Badge -->
+            <div id="rarity-badge"
+                class="px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-4 transition-all duration-300">
+                Szukam skrzyni...
+            </div>
+
+            <!-- Word to type -->
+            <div id="word-container"
+                class="text-5xl font-mono font-bold tracking-widest mb-12 transition-colors duration-200 bg-black bg-opacity-40 px-6 py-3 rounded-2xl border-2 border-gray-600">
+                <span id="typed-text" class="text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,1)]"></span><span
+                    id="remaining-text" class="text-gray-300 opacity-90 drop-shadow-md"></span>
+            </div>
+
+            <!-- Chest Area -->
+            <div class="relative h-64 flex items-center justify-center w-full">
+                <!-- Chest -->
+                <div id="chest-element"
+                    class="text-9xl cursor-default select-none float-animation transition-all duration-300 z-10">
+                    📦
+                </div>
+
+                <!-- Loot reveal (hidden by default) -->
+                <div id="loot-display"
+                    class="absolute inset-0 flex flex-col items-center justify-center opacity-0 pointer-events-none z-20">
+                    <div id="loot-emoji" class="text-8xl mb-2 drop-shadow-2xl">💎</div>
+                    <div id="loot-name" class="text-2xl font-bold rounded bg-black bg-opacity-50 px-4 py-1">Diament
+                    </div>
+                    <div id="loot-desc"
+                        class="text-xs text-gray-300 bg-black bg-opacity-40 px-4 py-1 rounded mt-2 max-w-xs text-center italic">
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ═══ Character Equipment Panel ═══ -->
+        <aside id="character-panel" class="character-panel">
+            <h2 class="character-panel-title">⚔️ Twoja Postać</h2>
+
+            <!-- Equipment Slots -->
+            <div class="equip-slots-grid">
+                <!-- Slot: Hełm -->
+                <div class="equip-slot" id="slot-helmet" data-slot="helmet" title="Hełm">
+                    <span class="slot-icon">🪖</span>
+                    <span class="slot-label">Hełm</span>
+                </div>
+
+                <!-- Slot: Zbroja -->
+                <div class="equip-slot" id="slot-armor" data-slot="armor" title="Zbroja">
+                    <span class="slot-icon">🛡️</span>
+                    <span class="slot-label">Zbroja</span>
+                </div>
+
+                <!-- Slot: Broń -->
+                <div class="equip-slot" id="slot-weapon" data-slot="weapon" title="Broń">
+                    <span class="slot-icon">⚔️</span>
+                    <span class="slot-label">Broń</span>
+                </div>
+
+                <!-- Slot: Talizman -->
+                <div class="equip-slot" id="slot-talisman" data-slot="talisman" title="Talizman">
+                    <span class="slot-icon">💍</span>
+                    <span class="slot-label">Talizman</span>
+                </div>
+            </div>
+
+            <p class="equip-hint">Kliknij przedmiot w ekwipunku,<br>by go założyć na wybrany slot.</p>
+
+            <!-- Character Stats Summary -->
+            <div class="char-stats-box">
+                <h3 class="char-stats-title">📊 Statystyki postaci</h3>
+                <div class="char-stats-grid">
+                    <div class="char-stat-row">
+                        <span>⚔️ Atak</span>
+                        <span id="stat-atk" class="char-stat-val">0</span>
+                    </div>
+                    <div class="char-stat-row">
+                        <span>🛡️ Obrona</span>
+                        <span id="stat-def" class="char-stat-val">0</span>
+                    </div>
+                    <div class="char-stat-row">
+                        <span>🍀 Szczęście</span>
+                        <span id="stat-lck" class="char-stat-val">0</span>
+                    </div>
+                    <div class="char-stat-row char-stat-total">
+                        <span>⭐ Łącznie</span>
+                        <span id="stat-total" class="char-stat-val">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div><!-- end middle row -->
+
+    <!-- Inventory Section -->
+    <section class="w-full max-w-6xl px-4 mt-8">
+        <div
+            class="bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-6 border-2 border-white border-opacity-30 shadow-2xl">
+            <h2 class="text-3xl font-extrabold mb-4 flex items-center gap-3 text-white">
+                <span>🎒</span> Twój Ekwipunek
+                <span id="item-count"
+                    class="text-lg font-medium text-gray-300 ml-auto bg-gray-800 px-4 py-1 rounded-full">Przedmioty:
+                    0</span>
+            </h2>
+
+            <!-- Dismissible hint banner -->
+            <div id="inv-hint-banner"
+                class="w-full flex items-start justify-between gap-4 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl px-5 py-4 mb-5 text-center">
+                <p class="flex-1 text-base text-gray-200 font-medium leading-relaxed">
+                    💡 Kliknij przedmiot, aby zobaczyć <b>szczegóły</b>. Możesz go założyć na slot lub sprzedać.<br>
+                    Przeciągnij przedmiot z ekwipunku bezpośrednio na slot postaci.
+                    Założony przedmiot <b>znika z bagażu</b> i wraca po zdjęciu.
+                </p>
+                <button id="inv-hint-ok"
+                    class="flex-shrink-0 self-center bg-white bg-opacity-20 hover:bg-opacity-40 text-white font-extrabold px-5 py-2 rounded-xl text-sm transition-colors border border-white border-opacity-30">
+                    Ok
+                </button>
+            </div>
+
+            <div id="inventory-grid"
+                class="flex flex-wrap gap-4 min-h-[100px] max-h-72 overflow-y-auto items-start justify-start">
+                <p id="empty-inventory" class="text-gray-400 w-full text-center italic mt-4">Ekwipunek jest pusty.
+                    Otwórz skrzynię!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Restart Button -->
+    <section class="w-full max-w-6xl px-4 mt-4 mb-4 flex justify-center">
+        <button id="reset-btn"
+            class="flex items-center gap-2 bg-red-900 bg-opacity-50 hover:bg-red-700 hover:bg-opacity-70 text-red-200 hover:text-white font-bold px-8 py-3 rounded-2xl border-2 border-red-700 border-opacity-50 hover:border-red-500 transition-all text-base shadow-lg">
+            🗑️ Restart &ndash; usuń wszystkie przedmioty
+        </button>
+    </section>
+
+    <!-- Item Detail Modal -->
+    <div id="item-modal" role="dialog" aria-modal="true">
+        <div id="modal-box" class="relative bg-gray-900 border-2 rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+            <button id="modal-close"
+                class="absolute top-3 right-4 text-gray-400 hover:text-white text-2xl font-bold leading-none">&times;</button>
+            <div class="flex flex-col items-center text-center">
+                <div id="modal-emoji" class="text-8xl mb-4 drop-shadow-2xl"></div>
+                <div id="modal-rarity"
+                    class="text-sm font-extrabold tracking-widest uppercase mb-2 px-4 py-1 rounded-full"></div>
+                <div id="modal-name" class="text-3xl font-bold mt-2 mb-4"></div>
+                <p id="modal-desc" class="text-gray-200 text-base font-medium italic mb-6 leading-relaxed"></p>
+                <!-- Stats -->
+                <div id="modal-stats" class="grid grid-cols-3 gap-3 w-full mb-6 text-sm"></div>
+
+                <!-- Equip slot buttons -->
+                <div id="equip-section" class="w-full mb-5">
+                    <p class="text-gray-300 font-bold text-sm mb-3">Załóż na slot:</p>
+                    <div class="grid grid-cols-4 gap-2" id="equip-slot-btns">
+                        <button class="equip-modal-btn" data-slot="helmet">🪖<br><span>Hełm</span></button>
+                        <button class="equip-modal-btn" data-slot="armor">🛡️<br><span>Zbroja</span></button>
+                        <button class="equip-modal-btn" data-slot="weapon">⚔️<br><span>Broń</span></button>
+                        <button class="equip-modal-btn" data-slot="talisman">💍<br><span>Talizman</span></button>
+                    </div>
+                </div>
+
+                <!-- Sell Button -->
+                <button id="modal-sell-btn"
+                    class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-3 px-6 rounded-xl transition-colors text-xl shadow-lg">
+                    💰 Sprzedaj
+                </button>
+                <p id="modal-sell-price" class="text-yellow-300 font-bold text-sm mt-3 opacity-90"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
