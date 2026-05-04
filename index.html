@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts dla lepszej czytelności i wyglądu -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-    
+
     <style>
         /* Animowane tło gradientowe */
         @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
+
         body {
             font-family: 'Nunito', sans-serif;
             background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #1e1b4b);
@@ -26,129 +36,259 @@
 
         /* Animacja wskakiwania kart po załadowaniu (kaskadowa) */
         @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.8) translateY(40px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(40px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
+
         .game-card {
             opacity: 0;
             animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+
         /* Opóźnienia dla każdej z kart, żeby wskakiwały po kolei */
-        .game-card:nth-child(1) { animation-delay: 0.1s; }
-        .game-card:nth-child(2) { animation-delay: 0.2s; }
-        .game-card:nth-child(3) { animation-delay: 0.3s; }
-        .game-card:nth-child(4) { animation-delay: 0.4s; }
-        .game-card:nth-child(5) { animation-delay: 0.5s; }
-        .game-card:nth-child(6) { animation-delay: 0.6s; }
-        .game-card:nth-child(7) { animation-delay: 0.7s; }
-        .game-card:nth-child(8) { animation-delay: 0.8s; }
-        .game-card:nth-child(9) { animation-delay: 0.9s; }
+        .game-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .game-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .game-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .game-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .game-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .game-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .game-card:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .game-card:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .game-card:nth-child(9) {
+            animation-delay: 0.9s;
+        }
     </style>
 </head>
+
 <body class="min-h-screen flex flex-col items-center py-10 px-4 sm:px-8 overflow-x-hidden">
 
     <!-- Efektowny Nagłówek -->
-    <header class="text-center max-w-4xl mb-14 mt-4 z-20 relative">
+    <header class="text-center max-w-4xl mb-6 mt-4 z-20 relative">
         <!-- Efekt rozmytego szkła (Glassmorphism) -->
         <div class="inline-block bg-white/10 backdrop-blur-md border border-white/20 p-6 md:p-8 rounded-3xl shadow-2xl">
-            <h1 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 leading-snug drop-shadow-lg mb-3">
+            <h1
+                class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 leading-snug drop-shadow-lg mb-3">
                 🎮 Wybierz grę! 🎮
             </h1>
             <p class="text-slate-200 text-lg md:text-xl font-medium">
-                Gdy obecna gierka ci się znudzi, kliknij przycisk <strong class="text-white bg-white/20 px-2 py-1 rounded">wstecz</strong> w przeglądarce (lewy górny róg)
+                Gdy obecna gierka ci się znudzi, kliknij przycisk <strong
+                    class="text-white bg-white/20 px-2 py-1 rounded">wstecz</strong> w przeglądarce (lewy górny róg)
             </p>
         </div>
     </header>
+
+    <!-- Zminimalizowane powiadomienie (na dole) -->
+    <div id="minimized-notification" 
+        onclick="document.getElementById('notification-banner').style.display='flex'; this.style.display='none';" 
+        style="display: none;"
+        class="fixed bottom-6 right-6 bg-red-500/30 backdrop-blur-md border border-red-500/50 rounded-full p-3 shadow-[0_0_15px_rgba(239,68,68,0.4)] cursor-pointer z-50 hover:bg-red-500/50 hover:scale-110 transition-all duration-300 flex items-center justify-center group">
+        <span class="text-2xl animate-pulse">🚨</span>
+        <span class="max-w-0 overflow-hidden whitespace-nowrap opacity-0 group-hover:max-w-[200px] group-hover:opacity-100 group-hover:ml-3 transition-all duration-500 text-white font-bold text-sm">
+            Aktualizacja 4.05.2026
+        </span>
+    </div>
+
+    <!-- Pole na powiadomienia -->
+    <div id="notification-banner"
+        class="w-full max-w-4xl bg-red-500/20 backdrop-blur-md border border-red-500/50 rounded-2xl p-4 mb-10 z-30 relative shadow-[0_0_20px_rgba(239,68,68,0.3)] flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-4">
+            <div class="text-3xl animate-bounce">🚨</div>
+            <div>
+                <h3
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-red-300 to-orange-300 font-bold text-lg mb-0.5">
+                    Aktualizacja 4.05.2026</h3>
+                <p class="text-slate-100 text-sm md:text-base">Spróbuj nowej aktualizacji do Burger Dash!</p>
+            </div>
+        </div>
+        <button onclick="document.getElementById('notification-banner').style.display='none'; document.getElementById('minimized-notification').style.display='flex';"
+            class="text-white/70 hover:text-red-300 hover:rotate-90 transition-all duration-300 p-2 text-2xl leading-none">
+            &times;
+        </button>
+    </div>
 
     <!-- Siatka z grami -->
     <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 w-full max-w-6xl z-10">
 
         <!-- Karta Gry 1 -->
-        <a href="gra1.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">⌨️</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 1</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra1.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                ⌨️</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                1</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 1" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 2 -->
-        <a href="gra2.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🚀</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 2</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra2.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🚀</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                2</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 2" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 3 -->
-        <a href="gra3.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🎯</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 3</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra3.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🎯</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                3</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 3" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 4 -->
-        <a href="gra4.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">👾</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 4</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra4.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                👾</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                4</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 4" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 5 -->
-        <a href="gra5.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🧩</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 5</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="burger-rush/index.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🍔</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Burger
+                Dash</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 5" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 6 -->
-        <a href="gra6.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">⚡</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 6</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra6.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">⚡
+            </div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                6</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 6" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 7 -->
-        <a href="looter-typer/index.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🏆</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 7</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="looter-typer/index.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🏆</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                7</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 7" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 8 -->
-        <a href="gra8.html" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🌟</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 8</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="gra8.html"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🌟</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                8</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 8" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
 
         <!-- Karta Gry 9 -->
-        <a href="#" class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
-            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">🎈</div>
-            <span class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra 9</span>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
-                <span class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj teraz!</span>
+        <a href="#"
+            class="game-card relative block aspect-[3/2] rounded-3xl bg-slate-900 border-2 border-white/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] cursor-pointer flex flex-col items-center justify-center group overflow-hidden">
+            <div class="text-6xl mb-4 transform transition-transform duration-300 group-hover:scale-110 z-10 relative">
+                🎈</div>
+            <span
+                class="text-white font-bold text-2xl text-center px-4 z-10 relative transition-transform duration-300 group-hover:-translate-y-1">Gra
+                9</span>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 flex items-end justify-center pb-6 pointer-events-none">
+                <span
+                    class="text-cyan-300 font-bold text-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Zagraj
+                    teraz!</span>
             </div>
             <!-- <img src="link_do_zdjecia.jpg" alt="Mini gra 9" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-300 z-0"> -->
         </a>
@@ -156,4 +296,5 @@
     </main>
 
 </body>
+
 </html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burger Dash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <a href="../index.html" class="back-btn">◀</a>
+        <div class="logo">🍔 BURGER DASH</div>
+        <div class="combo-display" id="combo-hud"></div>
+        <div class="stats" id="stats-panel" style="display: none;">
+            <div>PUNKTY: <span id="score">0</span></div>
+            <div>COMBO: <span id="combo-count">0</span>x</div>
+        </div>
+    </header>
+
+    <!-- Ekran startowy -->
+    <div class="screen-overlay" id="start-screen">
+        <div class="pixel-burger">🍔</div>
+        <div class="title-big">BURGER<br>DASH</div>
+        <div class="menu-text">
+            Buduj burgery wpisując składniki!<br>
+            Szybsze wpisywanie = więcej punktów combo.<br>
+            Błąd = spalony składnik — od nowa!
+        </div>
+        <button class="pixel-btn" onclick="startGame()">▶ START</button>
+    </div>
+
+    <!-- Ekran gry -->
+    <div id="game-area">
+        <div id="completed-sidebar" class="sidebar">
+            <h3>GOTOWE:</h3>
+            <div id="completed-list"></div>
+        </div>
+
+        <div id="order-board">
+            <h2>▼ BIEŻĄCE ZAMÓWIENIE (OD DOŁU DO GÓRY) ▼</h2>
+            <div id="order-list">
+                <!-- Generowane dynamicznie -->
+            </div>
+        </div>
+
+        <div id="kitchen">
+            <div id="plate-container">
+                <!-- Składniki pojawią się tutaj -->
+            </div>
+        </div>
+
+        <div id="typing-area">
+            <div id="typing-word">
+                <!-- Generowane dynamicznie -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Ekran końca gry -->
+    <div class="screen-overlay" id="game-over-screen" style="display: none;">
+        <div class="title-big">KONIEC<br>ZMIANY!</div>
+        <div class="menu-text" style="font-size: 1rem; color: #fff;">
+            PUNKTY: <span id="final-score" style="color: #f5c518;">0</span><br><br>
+            MAX COMBO: <span id="final-combo" style="color: #f5c518;">0</span>
+        </div>
+        <button class="pixel-btn" onclick="startGame()">▶ JESZCZE RAZ</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
